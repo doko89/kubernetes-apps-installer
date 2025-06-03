@@ -1,0 +1,42 @@
+globalArguments:
+  - "--global.checknewversion=false"
+  - "--global.sendanonymoususage=false"
+
+# Log level
+# Option: debug, info, warn, error, fatal, panic
+log:
+  level: INFO
+
+persistence:
+  enabled: {{ persistence_enabled }}
+  size: 512Mi
+  storageClass: "{{ storage_class }}"
+
+certificatesResolvers:
+{% if acme_challenge == "dns01" %}
+  cloudflare:
+    acme:
+      email: {{ acme_email }}
+      storage: /data/acme.json
+      dnsChallenge:
+        provider: cloudflare
+        delayBeforeCheck: 0
+        resolvers:
+          - "1.1.1.1:53"
+          - "8.8.8.8:53"
+
+env:
+  - name: CF_API_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: cloudflare-api-secret
+        key: api-token
+      
+{% elif acme_challenge == "http01" %}
+  http:
+    acme:
+      email: {{ acme_email }}
+      storage: /data/acme.json
+      httpChallenge:
+        entryPoint: web
+{% endif %}

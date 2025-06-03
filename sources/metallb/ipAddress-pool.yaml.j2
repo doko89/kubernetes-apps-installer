@@ -1,0 +1,22 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: {{ poolName }}
+  namespace: metallb-system
+spec:
+  addresses:
+    - {{ ipAddressPool }}
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: l2
+  namespace: metallb-system
+{% if interface is defined %}
+spec:
+  ipAddressPools:
+    - {{ poolName }}
+  interfaces:
+    - {{ interface }}
+{% else %}spec: {}
+{% endif %}

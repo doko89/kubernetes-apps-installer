@@ -1,0 +1,8 @@
+#!/bin/bash
+
+{% if acme_challenge == "dns01" %}
+kubectl create secret generic {{ cloudflare_secret_name }} \
+  --from-literal=api-token="{{ cloudflare_api_token }}" \
+  -n cert-manager
+
+{% endif %}

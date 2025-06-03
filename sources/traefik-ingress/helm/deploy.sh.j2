@@ -1,0 +1,20 @@
+#!/bin/bash
+set -e
+
+echo "Create secrets..."
+kubectl create secret generic cloudflare_secret_name \
+ --from-literal=api-token='{{ cloudflare_api_token }}' \
+ --from-literal=email='{{ cloudflare_email }}' \
+ -n traefik
+
+echo "🛠️ Deploying Helm chart traefik..."
+
+helm repo add traefik https://helm.traefik.io/traefik || true
+helm repo update
+
+helm upgrade --install traefik traefik/traefik \
+  -f output/traefik/values.yaml \
+  --namespace kube-system \
+  --create-namespace
+
+echo "✅ Traefik helm deployed"
