@@ -15,9 +15,13 @@ A simple tool to render and deploy Kubernetes manifests using templates.
 ## Setup
 
 1. Clone this repository
-2. Create your `env.yaml` file based on `example.env.yaml`
-3. Install dependencies:
+2. Create your `env.yaml` file based on `example.env.yaml`:
+   ```bash
+   cp example.env.yaml env.yaml
    ```
+3. Edit `env.yaml` with your specific configuration values
+4. Install dependencies:
+   ```bash
    pip install pyyaml jinja2
    ```
 
