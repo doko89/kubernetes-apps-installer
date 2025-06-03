@@ -1,0 +1,11 @@
+{% if ingress.enabled and ingress.ingressClassName == "traefik" and ingress.sslRedirect | default(true) %}
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-https
+  namespace: {{ namespace }}
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+{% endif %}

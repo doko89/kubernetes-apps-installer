@@ -1,0 +1,36 @@
+{% if ingress.enabled %}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wikijs-ingress
+  namespace: {{ namespace }}
+  annotations:
+    {% if ingress.ingressClassName == "nginx" %}
+    nginx.ingress.kubernetes.io/ssl-redirect: "{{ ingress.sslRedirect | default('true') }}"
+    {% elif ingress.ingressClassName == "traefik" %}
+    traefik.ingress.kubernetes.io/router.tls: "{{ ingress.sslRedirect | default('true') }}"
+    traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+    {% if ingress.sslRedirect | default(true) %}
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ namespace }}-redirect-https@kubernetescrd"
+    {% endif %}
+    {% endif %}
+spec:
+  ingressClassName: {{ ingress.ingressClassName }}
+  rules:
+  - host: {{ ingress.host }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: wikijs
+            port:
+              number: 80
+  {% if ingress.tls.enabled %}
+  tls:
+  - hosts:
+    - {{ ingress.host }}
+    secretName: {{ ingress.tls.secretName }}
+  {% endif %}
+{% endif %}

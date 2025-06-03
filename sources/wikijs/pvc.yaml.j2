@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wikijs-data
+  namespace: {{ namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {{ storage.className | default('standard') }}
+  resources:
+    requests:
+      storage: {{ storage.size | default('1Gi') }}

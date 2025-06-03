@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: n8n
+  namespace: {{ namespace }}
+  labels:
+    app: n8n
+spec:
+  replicas: {{ replicas | default(1) }}
+  selector:
+    matchLabels:
+      app: n8n
+  template:
+    metadata:
+      labels:
+        app: n8n
+    spec:
+      containers:
+      - name: n8n
+        image: n8nio/n8n:{{ version | default('latest') }}
+        ports:
+        - containerPort: 5678
+        env:
+        - name: N8N_HOST
+          value: "{{ ingress.host | default('localhost') }}"
+        - name: N8N_PORT
+          value: "5678"
+        - name: N8N_PROTOCOL
+          value: "{{ protocol | default('http') }}"
+        - name: WEBHOOK_URL
+          value: "{{ protocol | default('http') }}://{{ ingress.host | default('localhost') }}"
+        {% if database.enabled | default(false) %}
+        - name: DB_TYPE
+          value: {{ database.type | default('postgresdb') }}
+        - name: DB_POSTGRESDB_HOST
+          value: {{ database.host }}
+        - name: DB_POSTGRESDB_PORT
+          value: "{{ database.port | default(5432) }}"
+        - name: DB_POSTGRESDB_USER
+          value: {{ database.user }}
+        - name: DB_POSTGRESDB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ database.secretName }}
+              key: password
+        - name: DB_POSTGRESDB_DATABASE
+          value: {{ database.name | default('n8n') }}
+        {% endif %}
+        {% if encryption.enabled | default(false) %}
+        - name: N8N_ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ encryption.secretName }}
+              key: encryption-key
+        {% endif %}
+        resources:
+          requests:
+            memory: "{{ resources.requests.memory | default('256Mi') }}"
+            cpu: "{{ resources.requests.cpu | default('100m') }}"
+          limits:
+            memory: "{{ resources.limits.memory | default('1Gi') }}"
+            cpu: "{{ resources.limits.cpu | default('1000m') }}"
+        volumeMounts:
+        - name: n8n-data
+          mountPath: /home/node/.n8n
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 5678
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 5678
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: n8n-data
+        persistentVolumeClaim:
+          claimName: n8n-data

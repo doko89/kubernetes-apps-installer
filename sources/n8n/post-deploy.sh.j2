@@ -1,0 +1,18 @@
+#!/bin/bash
+
+echo "Waiting for n8n deployment to be ready..."
+kubectl wait --for=condition=available --timeout=300s deployment/n8n -n {{ namespace }}
+
+echo "n8n deployment is ready!"
+echo "Access n8n at: {{ protocol | default('http') }}://{{ ingress.host | default('localhost') }}"
+
+{% if database.enabled | default(false) %}
+echo "Database configuration:"
+echo "  Type: {{ database.type | default('postgresdb') }}"
+echo "  Host: {{ database.host }}"
+echo "  Database: {{ database.name | default('n8n') }}"
+{% else %}
+echo "Using SQLite database (file-based)"
+{% endif %}
+
+echo "Setup complete!"

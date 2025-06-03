@@ -1,0 +1,39 @@
+{% if ingress.enabled %}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: n8n-ingress
+  namespace: {{ namespace }}
+  annotations:
+    {% if ingress.ingressClassName == "nginx" %}
+    nginx.ingress.kubernetes.io/ssl-redirect: "{{ ingress.sslRedirect | default('true') }}"
+    nginx.ingress.kubernetes.io/proxy-body-size: "{{ ingress.maxBodySize | default('16m') }}"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "{{ ingress.readTimeout | default('3600') }}"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "{{ ingress.sendTimeout | default('3600') }}"
+    {% elif ingress.ingressClassName == "traefik" %}
+    traefik.ingress.kubernetes.io/router.tls: "{{ ingress.sslRedirect | default('true') }}"
+    traefik.ingress.kubernetes.io/router.entrypoints: "websecure"
+    {% if ingress.sslRedirect | default(true) %}
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ namespace }}-redirect-https@kubernetescrd"
+    {% endif %}
+    {% endif %}
+spec:
+  ingressClassName: {{ ingress.ingressClassName }}
+  rules:
+  - host: {{ ingress.host }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: n8n
+            port:
+              number: 80
+  {% if ingress.tls.enabled %}
+  tls:
+  - hosts:
+    - {{ ingress.host }}
+    secretName: {{ ingress.tls.secretName }}
+  {% endif %}
+{% endif %}

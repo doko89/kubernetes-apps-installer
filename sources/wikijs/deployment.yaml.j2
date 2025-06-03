@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wikijs
+  namespace: {{ namespace }}
+  labels:
+    app: wikijs
+spec:
+  replicas: {{ replicas | default(1) }}
+  selector:
+    matchLabels:
+      app: wikijs
+  template:
+    metadata:
+      labels:
+        app: wikijs
+    spec:
+      containers:
+      - name: wikijs
+        image: requarks/wiki:{{ version | default('2') }}
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DB_TYPE
+          value: {{ database.type | default('postgres') }}
+        - name: DB_HOST
+          value: {{ database.host }}
+        - name: DB_PORT
+          value: "{{ database.port | default(5432) }}"
+        - name: DB_USER
+          value: {{ database.user }}
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: {{ database.secretName }}
+              key: password
+        - name: DB_NAME
+          value: {{ database.name | default('wiki') }}
+        resources:
+          requests:
+            memory: "{{ resources.requests.memory | default('128Mi') }}"
+            cpu: "{{ resources.requests.cpu | default('100m') }}"
+          limits:
+            memory: "{{ resources.limits.memory | default('512Mi') }}"
+            cpu: "{{ resources.limits.cpu | default('500m') }}"
+        volumeMounts:
+        - name: wikijs-data
+          mountPath: /wiki/data
+      volumes:
+      - name: wikijs-data
+        persistentVolumeClaim:
+          claimName: wikijs-data

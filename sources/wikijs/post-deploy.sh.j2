@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+
+echo "🔄 Waiting for Wiki.js to be ready..."
+kubectl wait --for=condition=available deployment/wikijs -n {{ namespace }} --timeout=300s
+
+echo "✅ Wiki.js deployment completed!"
+echo "🌐 Access Wiki.js at: https://{{ ingress.host }}"
+echo ""
+echo "⚠️ Note: You need to create the database secret before Wiki.js can connect to the database:"
+echo "kubectl create secret generic {{ database.secretName }} --from-literal=password=YOUR_PASSWORD -n {{ namespace }}"
