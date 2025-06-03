@@ -1,0 +1,11 @@
+https://github.com/knative/serving/releases/download/knative-{{ version }}/serving-crds.yaml
+https://github.com/knative/serving/releases/download/knative-{{ version }}/serving-core.yaml
+{% if network.ingress == "kourier" %}
+https://github.com/knative/net-kourier/releases/download/knative-{{ version }}/kourier.yaml
+{% elif network.ingress == "istio" %}
+https://github.com/knative/net-istio/releases/download/knative-{{ version }}/istio.yaml
+https://github.com/knative/net-istio/releases/download/knative-{{ version }}/net-istio.yaml
+{% elif network.ingress == "contour" %}
+https://github.com/knative/net-contour/releases/download/knative-{{ version }}/contour.yaml
+https://github.com/knative/net-contour/releases/download/knative-{{ version }}/net-contour.yaml
+{% endif %}

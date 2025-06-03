@@ -1,0 +1,29 @@
+#!/bin/bash
+set -e
+
+echo "🔄 Waiting for Knative Serving to be ready..."
+kubectl wait --for=condition=available deployment/controller -n knative-serving --timeout=300s
+
+{% if network.ingress == "kourier" %}
+# Configure Kourier as the default ingress
+kubectl patch configmap/config-network \
+  --namespace knative-serving \
+  --type merge \
+  --patch '{"data":{"ingress.class":"kourier.ingress.networking.knative.dev"}}'
+
+# Get Kourier External IP/Domain
+EXTERNAL_IP=$(kubectl get service kourier -n kourier-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+if [ -z "$EXTERNAL_IP" ]; then
+  EXTERNAL_IP=$(kubectl get service kourier -n kourier-system -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+fi
+
+echo "✅ Knative with Kourier installed successfully!"
+echo "🌐 Kourier External IP/Domain: $EXTERNAL_IP"
+{% elif network.ingress == "istio" %}
+echo "✅ Knative with Istio installed successfully!"
+{% elif network.ingress == "contour" %}
+echo "✅ Knative with Contour installed successfully!"
+{% endif %}
+
+echo "🌐 Domain configured: {{ domain }}"
+echo "⚙️ Autoscaler configured with min-scale: {{ autoscaler.minScale }}, max-scale: {{ autoscaler.maxScale }}"

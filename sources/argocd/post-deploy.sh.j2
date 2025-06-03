@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+echo "🔄 Waiting for Argo CD to be ready..."
+kubectl wait --for=condition=available deployment/argocd-server -n {{ namespace }} --timeout=300s
+
+{% if admin.passwordSecret is defined %}
+echo "🔑 Setting up admin password from secret..."
+PASSWORD=$(kubectl get secret {{ admin.passwordSecret }} -n {{ namespace }} -o jsonpath="{.data.password}" | base64 -d)
+kubectl -n {{ namespace }} patch secret argocd-secret \
+  -p '{"stringData": {"admin.password": "'$(echo -n $PASSWORD | bcrypt-tool hash)'"}}' 
+{% endif %}
+
+echo "✅ Argo CD deployment completed!"
+echo "🌐 Access Argo CD at: https://{{ ingress.host }}"
